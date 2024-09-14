@@ -1,0 +1,32 @@
+- hosts: all
+
+  tasks:
+
+   - name: Disblay the date and time in All servers
+     command:  date
+     register: data_output
+
+   - name: Display time in format
+     command: date +%r
+     register: dataa_output
+
+   - name: check if filehuman is readble by humans
+     command: file home/glitch/output.txt
+     register: file_output
+
+   - name: Display the number of lines
+     command: wc -l /home/glitch/output.txt
+     register: word_output
+
+   - name: Display the first
+     command: head -n 10 /home/glitch/output.txt
+     register: first_output
+
+   - name: schreibe die ausgabe
+     copy:
+       content: |
+                 Time: "{{ data_output.stdout  }}"
+                 File: "{{ file_output.stdout  }}"
+                 Line: "{{ word_output.stdout  }}"
+                 first: "{{ first_output.stdout  }}"
+       dest: /home/glitch/fileansible.txt
