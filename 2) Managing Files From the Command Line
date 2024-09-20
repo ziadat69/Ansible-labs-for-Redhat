@@ -1,0 +1,94 @@
+- name: Organize project plans and files
+  hosts: localhost
+  tasks:
+    # 1. Create two empty files
+    - name: Create project plan files
+      file:
+        path: "{{ item }}"
+        state: touch
+      loop:
+        - ~/Documents/project_plans/season1_project_plan.odf
+        - ~/Documents/project_plans/season2_project_plan.odf
+
+    # 2. Create TV season episode files
+    - name: Create TV season episode files
+      file:
+        path: "~/Documents/project_plans/tv_season{{ season }}_episode{{ episode }}.ogg"
+        state: touch
+      loop: "{{ range(1, 7) | list }}"
+      vars:
+        season: "{{ item.0 }}"
+      with_sequence: start=1 end=2
+
+    # 3. Create mystery chapter files
+    - name: Create mystery chapter files
+      file:
+        path: "~/Documents/project_plans/mystery_chapter{{ item }}.odf"
+        state: touch
+      loop: "{{ range(1, 9) | list }}"
+
+    # 4. Create subdirectories under Videos directory
+    - name: Create season subdirectories
+      file:
+        path: "~/Videos/season{{ item }}"
+        state: directory
+      loop: "{{ range(1, 3) | list }}"
+
+    # 5. Move TV episodes into season subdirectories
+    - name: Move season 1 episodes
+      command: mv ~/Documents/project_plans/tv_season1* ~/Videos/season1
+
+    - name: Move season 2 episodes
+      command: mv ~/Documents/project_plans/tv_season2* ~/Videos/season2
+
+    # 6. Create my_bestseller and chapters directories
+    - name: Create my_bestseller and chapters
+      file:
+        path: "~/Documents/my_bestseller/chapters"
+        state: directory
+
+    # 7. Create additional subdirectories under my_bestseller
+    - name: Create additional subdirectories under my_bestseller
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - ~/Documents/my_bestseller/editor
+        - ~/Documents/my_bestseller/changes
+        - ~/Documents/my_bestseller/vacation
+
+    # 8. Move all book chapters to the chapters directory
+    - name: Move book chapters to chapters directory
+      command: mv ~/Documents/project_plans/mystery_chapter* ~/Documents/my_bestseller/chapters
+
+    # 9. Move mystery chapters 1 and 2 to the editor directory
+    - name: Move mystery_chapters 1 and 2 to editor
+      command: mv ~/Documents/my_bestseller/chapters/mystery_chapter{1,2}.odf ~/Documents/my_bestseller/editor
+
+    # 10. Move mystery chapters 7 and 8 to the vacation directory
+    - name: Move mystery_chapters 7 and 8 to vacation
+      command: mv ~/Documents/my_bestseller/chapters/mystery_chapter{7,8}.odf ~/Documents/my_bestseller/vacation
+
+    # 11. Copy the first episode of season 2 to the vacation directory
+    - name: Copy first episode of season 2 to vacation
+      command: cp ~/Videos/season2/*episode1.ogg ~/Documents/my_bestseller/vacation
+
+    # 12. List files in the vacation directory and return to season2
+    - name: List files in vacation
+      command: ls ~/Documents/my_bestseller/vacation
+
+    # 13. Change to changes directory and copy mystery_chapter5
+    - name: Copy mystery_chapter5 with date
+      command: cp ~/Documents/my_bestseller/chapters/mystery_chapter5.odf ~/Documents/my_bestseller/changes/mystery_chapter5_$(date +%F).odf
+
+    # 14. Delete the changes directory
+    - name: Delete changes directory
+      command: rm -r ~/Documents/my_bestseller/changes
+
+    # 15. Delete the humanfile file
+    - name: Delete humanfile
+      command: rm ~/filehuman
+
+    # 16. Create a hard link to the season2_project_plan.odf file
+    - name: Create a hard link
+      command: ln ~/Documents/project_plans/season2_project_plan.odf ~/Documents/hardlink/season2_project_plan.odf.bac
