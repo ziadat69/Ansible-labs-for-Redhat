@@ -1,0 +1,44 @@
+---
+- name: Setup /home/techdocs directory and configure permissions
+  hosts: localhost
+  become: yes  # Ensure we run with root privileges
+  tasks:
+
+    - name: Create /home/techdocs directory
+      file:
+        path: /home/techdocs
+        state: directory
+        mode: '0755'  # Temporary permissions before setting the final ones
+
+    - name: Create the techdocs group
+      group:
+        name: techdocs
+        state: present
+
+    - name: Change group ownership of /home/techdocs to techdocs group
+      file:
+        path: /home/techdocs
+        group: techdocs
+        state: directory
+
+    - name: Create techdoc1.txt file in /home/techdocs
+      file:
+        path: /home/techdocs/techdoc1.txt
+        state: touch
+
+    - name: Set permissions for /home/techdocs with setgid and rwx for owner and group, none for others
+      file:
+        path: /home/techdocs
+        mode: '2770'
+        state: directory
+
+    - name: Modify global umask to prevent others from viewing or modifying new files (007 for matching UID > 199)
+      copy:
+        dest: /etc/profile.d/local-umask.sh
+        content: |
+          if [ $UID -gt 199 ] && [ "`id -gn`" = "`id -un`" ]; then
+            umask 007
+          else
+            umask 022
+          fi
+        mode: '0755'
