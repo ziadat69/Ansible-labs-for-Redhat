@@ -1,0 +1,61 @@
+---
+- name: Manage users and groups configuration
+  hosts: localhost
+  become: yes  # Ensure we are running as root
+  tasks:
+
+    - name: Ensure password expiration is set to 30 days
+      lineinfile:
+        path: /etc/login.defs
+        regexp: '^PASS_MAX_DAYS'
+        line: 'PASS_MAX_DAYS 30'
+        state: present
+
+    - name: Create consultants group with GID 40000
+      group:
+        name: consultants
+        gid: 40000
+        state: present
+
+    - name: Create consultant1 user with consultants as supplementary group
+      user:
+        name: consultant1
+        groups: consultants
+        append: yes
+        state: present
+
+    - name: Create consultant2 user with consultants as supplementary group
+      user:
+        name: consultant2
+        groups: consultants
+        append: yes
+        state: present
+
+    - name: Create consultant3 user with consultants as supplementary group
+      user:
+        name: consultant3
+        groups: consultants
+        append: yes
+        state: present
+
+    - name: Ensure the user and group information files are present
+      stat:
+        path: "{{ item }}"
+      with_items:
+        - /etc/passwd
+        - /etc/group
+        - /etc/shadow
+      register: file_check
+
+    - name: Display status of critical files
+      debug:
+        var: file_check
+
+    - name: Ensure the chage command is available for managing password expiration
+      command: which chage
+      register: chage_check
+      ignore_errors: yes
+
+    - name: Display chage command location
+      debug:
+        var: chage_check.stdout
