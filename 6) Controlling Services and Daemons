@@ -1,0 +1,87 @@
+In Ansible, you can manage services using the `systemd` module, which allows you to perform tasks similar to those you've listed with `systemctl`. Here’s how you can use Ansible to manage systemd services:
+
+1. **View detailed information about a unit state**:
+   ```yaml
+   - name: Get detailed information about a unit state
+     ansible.builtin.command: systemctl status UNIT
+     register: unit_status
+
+   - debug:
+       var: unit_status.stdout
+   ```
+
+2. **Stop a service on a running system**:
+   ```yaml
+   - name: Stop a service
+     ansible.builtin.systemd:
+       name: UNIT
+       state: stopped
+   ```
+
+3. **Start a service on a running system**:
+   ```yaml
+   - name: Start a service
+     ansible.builtin.systemd:
+       name: UNIT
+       state: started
+   ```
+
+4. **Restart a service on a running system**:
+   ```yaml
+   - name: Restart a service
+     ansible.builtin.systemd:
+       name: UNIT
+       state: restarted
+   ```
+
+5. **Reload the configuration file of a running service**:
+   ```yaml
+   - name: Reload a service's configuration
+     ansible.builtin.systemd:
+       name: UNIT
+       state: reloaded
+   ```
+
+6. **Completely disable a service from being started, both manually and at boot**:
+   ```yaml
+   - name: Mask a service
+     ansible.builtin.systemd:
+       name: UNIT
+       masked: yes
+   ```
+
+7. **Make a masked service available**:
+   ```yaml
+   - name: Unmask a service
+     ansible.builtin.systemd:
+       name: UNIT
+       masked: no
+   ```
+
+8. **Configure a service to start at boot time**:
+   ```yaml
+   - name: Enable a service
+     ansible.builtin.systemd:
+       name: UNIT
+       enabled: yes
+   ```
+
+9. **Disable a service from starting at boot time**:
+   ```yaml
+   - name: Disable a service
+     ansible.builtin.systemd:
+       name: UNIT
+       enabled: no
+   ```
+
+10. **List units required and wanted by the specified unit**:
+    ```yaml
+    - name: List dependencies of a unit
+      ansible.builtin.command: systemctl list-dependencies UNIT
+      register: dependencies
+
+    - debug:
+        var: dependencies.stdout
+    ```
+
+Replace `UNIT` with the actual service name, like `nginx` or `httpd`. This setup will enable you to manage services with Ansible similarly to how you would with `systemctl`.
