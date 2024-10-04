@@ -1,0 +1,80 @@
+Here’s how you can accomplish these tasks using Ansible to automate the setup of SSH key-based authentication and configuration of `sshd`:
+
+### 1) Generate Passphrase-less SSH Key Pair on Server A
+To generate an SSH key pair without a passphrase, you can use the `ansible.builtin.shell` module. Since Ansible does not directly support SSH key generation, you’ll need to ensure that you handle this securely.
+
+```yaml
+- name: Generate SSH key pair on server A
+  hosts: server_a
+  tasks:
+    - name: Generate SSH key pair if not already created
+      ansible.builtin.shell: ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ''
+      args:
+        creates: ~/.ssh/id_rsa
+```
+
+### 2) Copy the Public Key to Server B
+To copy the public key to **Server B**, use the `ansible.builtin.shell` module to run `ssh-copy-id`. 
+
+```yaml
+- name: Copy public key to server B
+  hosts: server_a
+  tasks:
+    - name: Copy SSH key to server B
+      ansible.builtin.shell: ssh-copy-id -i ~/.ssh/id_rsa.pub ziadat69@serverb
+      delegate_to: localhost
+      become: no
+```
+
+### 3) Verify SSH Access to Server B
+To confirm that the SSH connection works without a password, you can use the `ansible.builtin.command` module.
+
+```yaml
+- name: Confirm password-less SSH access to server B
+  hosts: localhost
+  tasks:
+    - name: Test SSH connection to server B
+      ansible.builtin.command: ssh -o BatchMode=yes ziadat69@serverb 'echo SSH connection successful'
+      register: ssh_test
+      ignore_errors: yes
+
+    - name: Check SSH connection result
+      ansible.builtin.debug:
+        var: ssh_test.stdout
+      when: ssh_test is defined and ssh_test.stdout is not failed
+```
+
+### 4) Disable Root Login and Configure SSHD on Server B
+To modify the SSH configuration on **Server B** and reload the SSH service, you can use the `ansible.builtin.lineinfile` module and `ansible.builtin.systemd` module.
+
+```yaml
+- name: Configure SSH settings on server B
+  hosts: server_b
+  tasks:
+    - name: Ensure PermitRootLogin is set to no
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+
+    - name: Ensure PasswordAuthentication is set to no
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Reload SSH service to apply changes
+      ansible.builtin.systemd:
+        name: sshd
+        state: reloaded
+```
+
+### Explanation
+- **SSH Key Pair Generation**: The `ansible.builtin.shell` module generates the key pair if it doesn’t already exist.
+- **SSH Key Distribution**: `ssh-copy-id` is used to distribute the public key to **Server B**.
+- **SSH Access Verification**: The `ansible.builtin.command` module is used to verify that password-less SSH works by attempting a connection.
+- **SSHD Configuration**: The `ansible.builtin.lineinfile` module edits the `sshd_config` file to disable root login and password authentication. The `ansible.builtin.systemd` module reloads the SSH service to apply the changes.
+
+This playbook ensures secure key-based SSH access and limits access by disabling root login and password-based authentication.
