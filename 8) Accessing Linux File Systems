@@ -1,0 +1,80 @@
+Here’s how you can automate the tasks related to file systems, mount points, and file searching using Ansible playbooks:
+
+### 1) Display File Systems and Mount Points
+To use the `df` and `lsblk` commands for viewing file systems and mount points, use the `ansible.builtin.command` module:
+
+```yaml
+- name: Display file systems and mount points
+  hosts: all
+  tasks:
+    - name: Display file systems and mount points
+      ansible.builtin.command: df
+
+    - name: Display file systems in human-readable format
+      ansible.builtin.command: df -h
+
+    - name: Show disk usage for /var/log
+      ansible.builtin.command: du -h /var/log
+
+    - name: List details of block devices
+      ansible.builtin.command: lsblk
+
+    - name: List block devices with full paths, UUIDs, and mount points
+      ansible.builtin.command: lsblk -fp
+```
+
+### 2) Mount and Unmount File Systems
+To mount and unmount file systems, use `ansible.builtin.mount`:
+
+```yaml
+- name: Manage mount points
+  hosts: all
+  tasks:
+    - name: Mount the /dev/vdb1 partition on /mnt/data
+      ansible.builtin.mount:
+        path: /mnt/data
+        src: /dev/vdb1
+        fstype: ext4
+        state: mounted
+
+    - name: Unmount the /mnt/data directory
+      ansible.builtin.mount:
+        path: /mnt/data
+        state: unmounted
+```
+
+### 3) Search for Files
+To perform file searches, use `ansible.builtin.command` to run `find` and `locate`:
+
+```yaml
+- name: Search for files based on various criteria
+  hosts: all
+  tasks:
+    - name: Search for files with "passwd" in the name
+      ansible.builtin.command: locate passwd
+
+    - name: Perform a case-insensitive search for "messages"
+      ansible.builtin.command: locate -i messages
+
+    - name: Find files owned by the chrony user in /var/lib
+      ansible.builtin.command: sudo find /var/lib -user chrony
+
+    - name: Find files in /var owned by root and group owner mail
+      ansible.builtin.command: sudo find /var -user root -group mail
+
+    - name: Find files larger than 50 KB in /usr/bin
+      ansible.builtin.command: find /usr/bin -size +50k
+
+    - name: Find files in /home/student not changed in the last 120 minutes
+      ansible.builtin.command: find /home/student -mmin +120
+
+    - name: List all block device files in /dev
+      ansible.builtin.command: find /dev -type b
+```
+
+### Explanation
+- **File Systems and Mount Points**: The `df` and `du` commands show disk usage, while `lsblk` lists block devices.
+- **Mount/Unmount Operations**: The `ansible.builtin.mount` module is used to mount and unmount partitions.
+- **File Searching**: The `find` and `locate` commands allow you to locate files based on name, ownership, size, modification time, etc.
+
+Using these playbooks, you can automate file system and storage device management, as well as file search operations, to streamline tasks across multiple hosts.
