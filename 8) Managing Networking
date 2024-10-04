@@ -1,0 +1,59 @@
+To automate network configuration tasks with Ansible, you can use the `ansible.builtin.command` module for executing the `nmcli` commands, and the `ansible.builtin.shell` module to append entries to the `/etc/hosts` file.
+
+Here’s an Ansible playbook based on your network configuration requirements:
+
+```yaml
+- name: Network Configuration Playbook
+  hosts: all
+  become: true
+  tasks:
+    - name: Determine interface name and active connection
+      ansible.builtin.command: ip link
+      register: interface_info
+
+    - name: Display interface information
+      ansible.builtin.debug:
+        msg: "{{ interface_info.stdout }}"
+
+    - name: Create a new network connection profile
+      ansible.builtin.command: 
+        cmd: nmcli con add con-name ziadat69 ifname ens3 type ethernet ip4 172.30.312.4/24 gw4 172.30.312.254
+
+    - name: Modify the new connection with DNS
+      ansible.builtin.command: 
+        cmd: nmcli con mod "ziadat69" ipv4.dns 172.30.312.4
+
+    - name: Add an additional IP address to the connection
+      ansible.builtin.command: 
+        cmd: nmcli con mod "ziadat69" +ipv4.addresses 10.0.1.1/24
+
+    - name: Add an entry to the /etc/hosts file for private reference
+      ansible.builtin.shell: echo "10.0.1.1 private" >> /etc/hosts
+
+    - name: Display the current hostname
+      ansible.builtin.command: hostname
+
+    - name: Bring up the new connection settings
+      ansible.builtin.command: nmcli con up "ziadat69"
+
+    - name: Test connectivity using the new network address
+      ansible.builtin.command: 
+        cmd: ping -c 5 10.0.1.1
+      register: ping_result
+
+    - name: Display ping test results
+      ansible.builtin.debug:
+        msg: "{{ ping_result.stdout }}"
+```
+
+### Explanation
+1. **Interface and Connection**: The playbook first identifies the interface name and active connection with `ip link` and displays the output using `ansible.builtin.debug`.
+2. **Network Profile Creation**: Uses `nmcli con add` to create a new network connection named "ziadat69" with specified IP and gateway settings.
+3. **DNS Configuration**: Modifies the new connection to set DNS with `nmcli con mod`.
+4. **Additional IP Address**: Adds a secondary IP address using `nmcli con mod`.
+5. **Hosts File Configuration**: Appends an entry to `/etc/hosts` for private reference with `ansible.builtin.shell`.
+6. **Hostname Display**: Displays the current hostname of the system.
+7. **Activate Connection**: Brings up the network connection with `nmcli con up`.
+8. **Connectivity Test**: Pings the new IP address to test connectivity and shows the output.
+
+This playbook will automate the process of configuring and testing network settings using Ansible and can be run across multiple hosts as needed.
