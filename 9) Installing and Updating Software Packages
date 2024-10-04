@@ -1,0 +1,109 @@
+To manage packages and repositories on Red Hat-based systems using Ansible, you can use the `ansible.builtin.yum` module for package operations and `ansible.builtin.copy` for creating repository configuration files. Here's an example playbook to cover each of your tasks:
+
+```yaml
+- name: Package and Repository Management Playbook
+  hosts: all
+  become: true
+  tasks:
+    - name: List installed and available packages by name
+      ansible.builtin.command:
+        cmd: "yum list [NAME-PATTERN]"
+      register: yum_list
+    - name: Show output for installed and available packages
+      ansible.builtin.debug:
+        msg: "{{ yum_list.stdout }}"
+
+    - name: List installed and available groups
+      ansible.builtin.command:
+        cmd: "yum group list"
+      register: yum_group_list
+    - name: Show output for installed and available groups
+      ansible.builtin.debug:
+        msg: "{{ yum_group_list.stdout }}"
+
+    - name: Search for a package by keyword
+      ansible.builtin.command:
+        cmd: "yum search KEYWORD"
+      register: yum_search
+    - name: Show output for package search
+      ansible.builtin.debug:
+        msg: "{{ yum_search.stdout }}"
+
+    - name: Get package information
+      ansible.builtin.command:
+        cmd: "yum info PACKAGENAME"
+      register: yum_info
+    - name: Show package information
+      ansible.builtin.debug:
+        msg: "{{ yum_info.stdout }}"
+
+    - name: Install a package
+      ansible.builtin.yum:
+        name: PACKAGENAME
+        state: present
+
+    - name: Install a package group
+      ansible.builtin.yum:
+        name: "@GROUPNAME"
+        state: present
+
+    - name: Update all packages
+      ansible.builtin.yum:
+        name: "*"
+        state: latest
+
+    - name: Remove a package
+      ansible.builtin.yum:
+        name: PACKAGENAME
+        state: absent
+
+    - name: Display yum transaction history
+      ansible.builtin.command:
+        cmd: "yum history"
+      register: yum_history
+    - name: Show yum transaction history
+      ansible.builtin.debug:
+        msg: "{{ yum_history.stdout }}"
+
+    - name: View all available repositories
+      ansible.builtin.command:
+        cmd: "yum repolist all"
+      register: yum_repolist
+    - name: Show repository list
+      ansible.builtin.debug:
+        msg: "{{ yum_repolist.stdout }}"
+
+    - name: Create a yum repository file
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/errata.repo
+        content: |
+          [updates]
+          name=example Updates
+          baseurl=http://content.example.com
+          enabled=1
+          gpgcheck=0
+
+    - name: List available modules and streams
+      ansible.builtin.command:
+        cmd: "yum module list"
+      register: yum_module_list
+    - name: Show module and stream list
+      ansible.builtin.debug:
+        msg: "{{ yum_module_list.stdout }}"
+
+    - name: Install httpd module with stream 2.4 and common profile
+      ansible.builtin.yum:
+        name: "httpd:2.4"
+        state: present
+        module_name: "httpd"
+        module_stream: "2.4"
+        module_profile: "common"
+```
+
+### Explanation:
+1. **Package and Group Listings**: The `ansible.builtin.command` module is used for `yum list` and `yum group list`, and their results are outputted using `ansible.builtin.debug`.
+2. **Package Installation, Update, and Removal**: The `ansible.builtin.yum` module installs, updates, and removes packages as needed.
+3. **Repository Configuration**: The `ansible.builtin.copy` module creates a custom repository file in `/etc/yum.repos.d/`.
+4. **Module Installation**: Installs the `httpd` module with the `2.4` stream using `ansible.builtin.yum`.
+
+This playbook will automate package and repository management across multiple hosts.
