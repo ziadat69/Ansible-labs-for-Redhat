@@ -1,0 +1,73 @@
+---
+- name: Konfiguriere rsyslog und chronyd, und setze Systemzeit
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Erstelle rsyslog Konfigurationsdatei für Debug-Level
+      copy:
+        dest: /etc/rsyslog.d/debug.conf
+        content: "*.debug /var/log/messages-debug\n"
+      notify:
+        - Restart rsyslog
+
+    - name: Starte den rsyslog-Dienst neu (Handler)
+      service:
+        name: rsyslog
+        state: restarted
+      listen: Restart rsyslog
+
+    - name: Logge eine Test-Nachricht mit user.debug
+      command: logger -p user.debug "Debug Message Test"
+
+    - name: Überprüfe die letzten 10 Einträge in /var/log/messages-debug
+      command: tail /var/log/messages-debug
+
+    - name: Zeige die letzten 5 Journal-Einträge an
+      command: journalctl -n 5
+
+    - name: Starte Journal-Verfolgung in Echtzeit
+      command: journalctl -f
+
+    - name: Zeige Fehler-Einträge aus dem Journal an
+      command: journalctl -p err
+
+    - name: Zeige Journal-Einträge der letzten Stunde an
+      command: journalctl --since "-1 hour"
+
+    - name: Zeige Journal-Einträge mit verboser Ausgabe an
+      command: journalctl -o verbose
+
+    - name: Zeige aktuelle Zeit- und Zeitzonen-Einstellungen an
+      command: timedatectl
+
+    - name: Setze die Systemzeit auf 9:00:00
+      command: timedatectl set-time 9:00:00
+
+    - name: Konfiguriere chronyd, um classroom.example.com als NTP-Server zu verwenden
+      lineinfile:
+        path: /etc/chrony.conf
+        line: "server classroom.example.com iburst"
+        create: yes
+      notify:
+        - Restart chronyd
+
+    - name: Starte den chronyd-Dienst neu (Handler)
+      service:
+        name: chronyd
+        state: restarted
+      listen: Restart chronyd
+
+    - name: Zeige Journal-Einträge von 10:00 bis 10:30 an
+      command: journalctl --since "10:00:00" --until "10:30:00"
+
+  handlers:
+    - name: Restart rsyslog
+      service:
+        name: rsyslog
+        state: restarted
+
+    - name: Restart chronyd
+      service:
+        name: chronyd
+        state: restarted
